@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plant Operations Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--dark:#2b2f33;--teal:#1b5e6e;--cyan:#4cc3dc;--bg:#eef1f4;--mut:#6b7785;--grn:#2e9e5b;--amb:#e0a526;--red:#d9534f}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:#1f2933;font-size:12px}
+  header{background:var(--dark);padding:12px 20px 0}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+  .top h1{margin:0;color:#fff;font-size:18px;font-weight:600}
+  .top small{color:#9aa5b1;margin-left:10px;font-weight:400;font-size:11px}
+  .badge{border:1px solid #556;color:#cbd5e0;border-radius:14px;padding:3px 10px;font-size:10px}
+  .tabs{display:flex;gap:4px;overflow-x:auto}
+  .tab{flex:1;min-width:140px;padding:9px 8px;background:#4a5057;color:#e5e9ee;font-weight:600;border-radius:6px 6px 0 0;cursor:pointer;border:0;font-size:13px}
+  .tab.on{background:#fff;color:var(--teal)}
+  .subbar{background:#fff;padding:8px 14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;border-bottom:1px solid #e3e8ee}
+  .sub{padding:6px 14px;border:1px solid #cfd6de;border-radius:4px;background:#fff;cursor:pointer;font-size:12px}
+  .sub.on{background:var(--cyan);color:#fff;border-color:var(--cyan)}
+  main{padding:12px 20px}
+  .bar{background:#fff;border-radius:6px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .bar label{color:var(--mut);font-size:10px;font-weight:600;letter-spacing:.5px;margin-right:2px}
+  .chip{padding:4px 10px;border:1px solid #cfd6de;border-radius:4px;background:#fff;cursor:pointer;font-size:11px;user-select:none}
+  .chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .chip.all{background:#fff3c4;border-color:#e9d58a}
+  .info{color:var(--mut);font-size:11px;margin:0 2px 10px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+  .kpi{background:#fff;border-radius:6px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.06);border-top:3px solid var(--teal)}
+  .kpi .v{font-size:22px;font-weight:700;color:var(--teal)}
+  .kpi .l{color:var(--mut);font-size:11px;margin-top:2px}
+  .kpi.red{border-color:var(--red)}.kpi.red .v{color:var(--red)}
+  .kpi.amb{border-color:var(--amb)}.kpi.amb .v{color:#c48a0c}
+  .kpi.grn{border-color:var(--grn)}.kpi.grn .v{color:var(--grn)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px;margin-bottom:10px}
+  .card{background:#fff;border-radius:6px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06);min-width:0}
+  .card h3{margin:0 0 6px;font-size:12px;font-weight:600;text-align:center}
+  .card.mini h3{font-size:11px}
+  .scroll{max-height:300px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{background:var(--teal);color:#fff;padding:6px 7px;text-align:right;font-weight:600;position:sticky;top:0}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:5px 7px;text-align:right;border-bottom:1px solid #eef1f4}
+  tr:nth-child(even) td{background:#f7f9fb}
+  .g{color:var(--grn);font-weight:600}.a{color:#c48a0c;font-weight:600}.r{color:var(--red);font-weight:600}
+  .cal{display:grid;grid-template-columns:50px repeat(31,1fr);gap:1px;font-size:8px}
+  .cal div{text-align:center;padding:2px 0;color:#fff;min-height:13px}
+  .cal .h{background:none;color:var(--mut)}
+  .cal .lb{background:none;color:var(--mut);text-align:left;font-size:9px}
+  .hide{display:none}
+  footer{text-align:center;color:var(--mut);font-size:10px;padding:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div><h1>Plant Operations Dashboard <small>Injection-moulded hangers &amp; accessories · 6 production bays</small></h1></div>
+    <span class="badge">● SYNTHETIC DEMO DATA</span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+<div class="subbar" id="subs"></div>
+<main>
+  <div class="bar">
+    <label>YEAR</label><span class="chip" data-y="2025">2025</span><span class="chip" data-y="2026">2026</span>
+    <label style="margin-left:12px">BAY</label>
+    <span class="chip all" id="allBtn">All bays</span>
+    <span id="bayChips"></span>
+  </div>
+  <div class="info" id="info"></div>
+  <div id="view"></div>
+</main>
+<footer>Synthetic demo data generated to resemble the plant dashboard · every filter applies to all views</footer>
+
+<script>
+// ---------- base data (approximated from the screenshots) ----------
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const BAYS=["Bay-01","Bay-02","Bay-03","Bay-04","Bay-05","Bay-06"];
+const W=[.18,.17,.16,.19,.15,.15];
+const F25=[1.02,.94,1.05,.9,.97,1.01,.93,1,1.06,.95,1.03,1.12];
+const GOOD=[9.48,8.18,7.86,10.1,9.43,9.16,12.5,8.95,7.03];
+const RATE=[87.6,90.2,88.9,90.1,89.7,89.4,90.3,88.1,89.2];
+const REJ=[755,614,661,496,826,708,826,661,496];
+const DT=[317,435,710,261,374,446,520,379,355];
+const PL=[700,760,820,640,720,700,820,780,690];
+const AV=[95,92,91,95,92,94,95,89,87];
+const PF=[90,91,90.5,92,93,93,93.5,96,94];
+const QL=[98.7,97.9,97.8,97.6,97.8,98.8,98,98.6,98.9];
+const PROD=[80,78,78,80,82,82,82,83,84];
+const MAN=[845,697,584,1040,741,889,1180,699,572];
+const MANP=[19,17,16,21,18,22,19,16,19];
+const CYC=[23.2,20.3,20.3,20.7,21.3,22.3,22.9,25.7,34.5];
+const CMP=[8,25,5,8,5,6,7,9,7];
+const COST=[5.3,18,3.1,7.6,4.4,5.8,5.3,8.7,5.9];
+const CLOSS=[8,7,6,6,6,4,4,3,2], CAVL=[4,3,4,4,3,3,3,3,4];
+const ORD_AGE=[2940,3290,3750,1930,552,643,183,259,159,157];
+const BUYERS=[["1778","Retailer A","HB-821",1614,746,921],["1434","Retailer D","HB-814",1293,392,786],["579","Retailer E","HT-818",1272,388,783],["1702","Retailer D","HB-280",1242,974,349],["134","Retailer B","HB-701",1218,383,789],["1676","Retailer H","HB-500",1214,710,667],["1528","Retailer J","HB-318",1175,551,619],["989","Retailer L","HT-782",997,444,582],["1050","Retailer F","HT-797",886,381,409]];
+const ARTS=[["1030","Retailer C","HT-664","0-30 d",760],["1112","Retailer D","HT-522","0-30 d",616],["1513","Retailer B","HB-701","0-30 d",607],["1527","Retailer G","HB-705","0-30 d",550],["520","Retailer D","HB-280","0-30 d",481],["1177","Retailer E","HT-257","0-30 d",412],["684","Retailer A","HT-747","0-30 d",399],["365","Retailer A","HT-834","0-30 d",399]];
+const STOCK_AGE=[9140,2670,2470,497,408,534];
+const AGE_LBL=["0-30 d","31-60 d","61-90 d","91-180 d","181-365 d","366-730 d"];
+const CONS=[["All plastic",6610],["Plastic bar + print + hook",4540],["Plastic bar + hook + print",940],["Plastic bar + hook + clip",1500],["Plastic bar + PC hook",1120],["Plastic bar + clip",1110],["Other",600]];
+const REJ_TYPES=[["Short Mold",1950],["Color Change",1170],["Other Scrap",917],["Flow Mark",664],["Startup",463],["Excess Flash",333],["Burn/Pin Mark",131],["Oil/Grease",97],["Water Mark",46],["Mold Clean",17]];
+const DT_GROUPS=[["Machine",3200],["Mold",2400],["Power Failure",1600],["Auxiliary",1400],["Human Factors",1100],["Utility",1000],["Material",808]];
+const REASONS=[["Damage",52],["Wrong Shipment",11],["Short Shipment",7],["Corrosion",6],["Flash",5]];
+const MREASON=[["Capacity",.22],["Machine",.19],["Hanger",.17],["Operator",.14],["Electricity",.08],["Other",.2]];
+const MACH=[["L4-10",83.5,97,86,99.6],["L3-18",81.5,89,92,99.6],["L5-07",92.5,98,95,99.6],["L2-01",92.1,97,95,99.5],["L1-19",76.8,86,90,99.5],["L6-20",75.9,88,87,99.5],["L2-08",71.6,83,87,99.5],["L3-11",83.1,97,86,99.4],["L4-07",85.9,97,89,99.4],["L3-06",83.6,90,94,99.4],["L3-19",80.9,90,90,99.4],["L4-11",81.4,92,89,99.4],["L2-17",74,86,86,99.4],["L1-07",91.3,97,95,99.4],["L4-15",69.1,88,79,99.3],["L1-20",84.6,96,89,99.3],["L5-11",73.7,85,88,99.3],["L1-08",84,96,88,99.3],["L4-17",90.5,98,93,99.2],["L3-07",77.9,82,95,99.2],["L4-12",85.2,94,91,99.2],["L1-17",86.8,98,89,99.2],["L1-09",85.1,98,88,99.1],["L5-08",78.6,92,86,99.1],["L3-05",90,98,93,99.1],["L4-01",84.1,97,87,99.1],["L5-04",96.6,98,98,99.5],["L5-20",95.2,96,97,99.4]];
+const CYCM=[["L5-04","HT-644",20.11],["L5-20","HT-480",20.65],["L4-20","HT-326",24.98],["L1-19","HT-598",25.8],["L5-01","HT-402",34.47]];
+const TEAL="#1b5e6e",CYAN="#4cc3dc",LT="#9fd8e6",GRN="#2e9e5b",AMB="#e0a526",RED="#d9534f",PUR="#8b7fd6",PINK="#f4b6c2",GREY="#7a8794";
+const PAL=[TEAL,CYAN,LT,AMB,RED,PUR,PINK,GREY];
+const GR={color:"#eef1f4"};
+
+// ---------- filters & deterministic variation ----------
+const VIEWS={prod:["Orders Summary","Shopfloor Production"],eff:["Efficiency Overview","Cycle Time Analysis","Cavity Utilization"],down:["Downtime Summary","Downtime Categories","Downtime Trends"],qa:["Rejections Summary","Rejection Categories","Rejection Trends","Customer Complaints"],fg:["FG Stock Ageing"]};
+const TABS={prod:"Production & Planning",eff:"Overall Efficiency",down:"Downtime & Maintenance",qa:"Quality Assurance",fg:"FG Store & RMS"};
+let sel=new Set(BAYS), year=2026, main="prod", sub=0, selGrp=0, selCat=0, specs=[], live=[], uid=0;
+const BI=()=>[...sel].map(b=>BAYS.indexOf(b));
+const ratio=()=>BI().reduce((t,b)=>t+W[b],0);
+const T=a=>a.reduce((x,y)=>x+y,0);
+const hf=x=>Math.abs(Math.sin(x*12.9898)*43758.5453)%1;
+function nz(b,k,m,a=.08){let x=Math.sin((b+1)*127.1+m*311.7+k.length*74.3+k.charCodeAt(0)*13.7+year*.37)*43758.5453;x-=Math.floor(x);return 1+(x-.5)*a;}
+const ser=arr=>arr.length===12?(year==2026?arr.slice(0,9):arr.map((v,i)=>v*F25[i])):(year==2026?arr:arr.concat(arr.slice(0,3)).map((v,i)=>v*F25[i]));
+function sumM(arr,k,a=.08){const s=ser(arr);return s.map((v,m)=>BI().reduce((t,b)=>t+v*W[b]*nz(b,k,m,a),0));}
+function pctM(arr,k){const s=ser(arr),g=ser(GOOD);return s.map((v,m)=>{let num=0,den=0;BI().forEach(b=>{const w=g[m]*W[b]*nz(b,'good',m);num+=v*nz(b,k,m,.03)*w;den+=w;});return num/den;});}
+const wavg=(arr,good)=>T(arr.map((v,i)=>v*good[i]))/T(good);
+function calc(){const good=sumM(GOOD,'good'),rej=sumM(REJ,'rej'),dt=sumM(DT,'dt'),pl=sumM(PL,'pl'),rate=pctM(RATE,'rate'),av=pctM(AV,'av'),pf=pctM(PF,'pf'),ql=pctM(QL,'ql');
+  return {good,rej,dt,pl,rate,av,pf,ql,oee:av.map((x,i)=>x*pf[i]*ql[i]/10000),prod:pctM(PROD,'prod'),man:sumM(MAN,'man'),manp:pctM(MANP,'mp'),cyc:pctM(CYC,'cyc'),cmp:sumM(CMP,'cmp',.15).map(Math.round),cost:sumM(COST,'cost'),mo:ser(GOOD).map((_,i)=>MN[i]),rf:ratio()};}
+function groupM(i){const share=DT_GROUPS[i][1]/11565;return ser(DT).map((v,m)=>v*share*ratio()*nz(0,'g'+i,m,.15));}
+function catM(i,total){const s=ser([...Array(12)].map((_,m)=>.55+.9*hf(i*5.3+m*1.7)));const sum=T(s);return s.map((v,m)=>total*v/sum*ratio()*nz(0,'c'+i,m,.1));}
+function weekly(total,m,i){const n=m%3===1?5:4;return {labels:[...Array(n)].map((_,w)=>"W"+(w+1)),data:[...Array(n)].map((_,w)=>Math.round(total/n*(.75+.5*hf(i*7.1+m*3.3+w))))};}
+
+// ---------- rendering helpers ----------
+const KP=(v,l,c="")=>`<div class="kpi ${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+const ROW=h=>`<div class="kpis">${h}</div>`;
+const GRID=h=>`<div class="grid">${h}</div>`;
+function card(title,type,labels,datasets,o={}){const id="c"+(uid++);specs.push({id,type,labels,datasets,...o});return `<div class="card ${o.cls||""}"><h3>${title}</h3><canvas id="${id}"></canvas></div>`;}
+const mini=(title,type,labels,datasets,o={})=>card(title,type,labels,datasets,{cls:"mini",ar:1.6,plugins:{legend:{display:false}},...o});
+function table(title,hd,rows){return `<div class="card"><h3>${title}</h3><div class="scroll"><table><thead><tr>${hd.map(x=>`<th>${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;}
+const chips=(list,cur,act)=>`<div class="bar" style="margin-bottom:10px">${list.map((x,i)=>`<span class="chip ${i===cur?"on":""}" data-act="${act}" data-i="${i}">${x}</span>`).join("")}</div>`;
+const fmtK=n=>n>=1000?(n/1000).toFixed(2)+"M":Math.round(n)+"K";
+
+// ---------- views: production ----------
+function vOrdersSum(){const C=calc(),rf=C.rf;
+  return ROW(KP((T(ORD_AGE)*rf/1000).toFixed(2)+"M","Pending orders yet to produce","red")+KP((T(BUYERS.map(b=>b[5]))*rf/1000).toFixed(2)+"M","To produce (top buyers)","red")+KP(Math.round(T(BUYERS.map(b=>b[4]))*rf/1000*10)/10+"M","Stock on hand (top buyers)","amb"))+
+  GRID(card("Yet to produce by order age (K pcs)","bar",["1 wk","2 wk","3 wk","4 wk","5 wk","6 wk","7 wk","8 wk","9 wk","10+ wk"],[{label:"K pcs",data:ORD_AGE.map(v=>Math.round(v*rf)),backgroundColor:[RED,RED,RED,RED,AMB,AMB,AMB,AMB,AMB,AMB]}],{plugins:{legend:{display:false}}})+
+  table("Open orders by article",["Art#","Buyer","Model","Orders","Stock","To produce"],BUYERS.map(r=>[r[0],r[1],r[2],Math.round(r[3]*rf).toLocaleString()+"K",Math.round(r[4]*rf)+"K",Math.round(r[5]*rf)+"K"])));}
+function vShop(){const C=calc(),rf=C.rf;
+  return ROW(KP(T(C.good).toFixed(2)+"M","Good volume (YTD)")+KP(wavg(C.rate,C.good).toFixed(1)+"%","Good rate","grn")+KP((T(C.prod)/C.prod.length).toFixed(1)+"%","Avg productivity")+KP(wavg(C.manp,C.man).toFixed(1)+"%","Manual finishing share","amb"))+
+  GRID(card("Good production volume & good rate","bar",C.mo,[{label:"Good volume (M)",data:C.good.map(v=>+v.toFixed(2)),backgroundColor:TEAL,yAxisID:"y"},{label:"Good rate %",type:"line",data:C.rate.map(v=>+v.toFixed(1)),borderColor:CYAN,backgroundColor:CYAN,tension:.35,yAxisID:"y1"}],{scales:{y:{grid:GR},y1:{position:"right",min:80,max:95,grid:{display:false}}}})+
+  card("Productivity % (actual vs target)","line",C.mo,[{label:"Productivity %",data:C.prod,borderColor:GRN,backgroundColor:"rgba(46,158,91,.12)",fill:true,tension:.35}],{scales:{y:{min:70,max:90,grid:GR}}})+
+  card("Finishing volume & manual share","bar",C.mo,[{label:"Manual (K pcs)",data:C.man.map(Math.round),backgroundColor:TEAL,yAxisID:"y"},{label:"Manual share %",type:"line",data:C.manp,borderColor:CYAN,tension:.35,yAxisID:"y1"}],{scales:{y:{grid:GR},y1:{position:"right",min:0,max:30,grid:{display:false}}}})+
+  card("Share of output finished manually, by reason (%)","line",C.mo,MREASON.map((r,i)=>({label:r[0],data:C.manp.map((v,m)=>+(v*r[1]*(1+.15*Math.sin(m+i))).toFixed(1)),borderColor:PAL[i],tension:.35})),{scales:{y:{grid:GR}}})+
+  card("Production mix by hanger construction","doughnut",CONS.map(d=>d[0]),[{data:CONS.map(d=>Math.round(d[1]*rf)),backgroundColor:PAL}],{opts:{cutout:"55%"}})+
+  table("Bay share of good volume",["Bay","Share %","Good (M)"],BAYS.map((b,i)=>sel.has(b)?[b,(W[i]*100).toFixed(0),(T(GOOD)*W[i]).toFixed(2)]:null).filter(Boolean)));}
+
+// ---------- views: efficiency ----------
+function vEffOv(){const C=calc();const ms=MACH.filter(m=>sel.has("Bay-0"+m[0][1])).sort((a,b)=>b[1]-a[1]);const low=ms.length?ms[ms.length-1]:null;
+  return ROW(KP(wavg(C.av,C.good).toFixed(1)+"%","Availability","grn")+KP(wavg(C.pf,C.good).toFixed(1)+"%","Performance","grn")+KP(wavg(C.ql,C.good).toFixed(1)+"%","Quality","grn")+KP(wavg(C.oee,C.good).toFixed(1)+"%","OEE","amb")+KP(low?low[1]+"% ("+low[0]+")":"-","Lowest machine OEE","red"))+
+  GRID(card("Availability · Performance · Quality (%)","line",C.mo,[{label:"Performance",data:C.pf,borderColor:AMB,tension:.35},{label:"Availability",data:C.av,borderColor:CYAN,tension:.35},{label:"Quality",data:C.ql,borderColor:GRN,tension:.35}],{scales:{y:{min:85,max:100,grid:GR}}})+
+  card("OEE % (monthly)","line",C.mo,[{label:"OEE %",data:C.oee.map(v=>+v.toFixed(1)),borderColor:RED,backgroundColor:"rgba(217,83,79,.1)",fill:true,tension:.35}],{scales:{y:{min:70,max:95,grid:GR}}})+
+  card("Cavity efficiency: where the losses come from (%)","line",C.mo,[{label:"Cycle-time loss %",data:CLOSS.slice(0,C.mo.length),borderColor:AMB,tension:.35},{label:"Cavity loss %",data:CAVL.slice(0,C.mo.length),borderColor:RED,tension:.35}],{scales:{y:{grid:GR}}})+
+  table("OEE by machine (sorted)",["Machine","OEE %","Perf. %","Avail. %","Quality %"],ms.map(r=>[r[0],`<span class="${r[1]>=85?"g":r[1]<78?"r":"a"}">${r[1].toFixed(1)}</span>`,r[2],r[3],r[4]])));}
+function vCyc(){const C=calc();const rows=CYCM.filter(r=>sel.has("Bay-0"+r[0][1]));
+  return ROW(KP("20.11s","Top performer (L5-04)","grn")+KP("+12.57s","Largest gap (L5-01)","red")+KP("169 min","Potential saving / day","amb")+KP("21.9s","Standard cycle time"))+
+  GRID(card("Cycle-time history (T-4417, s)","line",C.mo,[{label:"Cycle time",data:C.cyc.map(v=>+v.toFixed(1)),borderColor:CYAN,tension:.35},{label:"Standard 21.9s",data:C.mo.map(()=>21.9),borderColor:RED,borderDash:[6,4],pointRadius:0}],{scales:{y:{min:18,max:36,grid:GR}}})+
+  card("Average cycle time by machine (s)","bar",rows.map(r=>r[0]),[{label:"Avg s",data:rows.map(r=>r[2]),backgroundColor:rows.map(r=>r[2]>21.9?RED:GRN)}],{plugins:{legend:{display:false}},scales:{y:{min:15,grid:GR}}})+
+  table("Cycle time by machine",["Machine","Model","Avg (s)","Gap vs 21.9s"],rows.map(r=>{const g=(r[2]-21.9).toFixed(2);return [r[0],r[1],r[2].toFixed(2),`<span class="${g>0?"r":"g"}">${g>0?"+":""}${g}</span>`];})));}
+function vCav(){let h="<div class='cal'><div class='h'></div>"+[...Array(31)].map((_,i)=>`<div class='h'>${i+1}</div>`).join("");
+  for(let i=0;i<21;i++){const y=2025+Math.floor(i/12),m=i%12,days=new Date(y,m+1,0).getDate();h+=`<div class='lb'>${MN[m]}-${String(y).slice(2)}</div>`;
+    for(let d=0;d<31;d++){if(d>=days){h+="<div></div>";continue;}const x=hf(i*12.9898+d*78.233);const [t,c]=x<.12?["100%",GRN]:x<.9?["88%",AMB]:["75%",RED];h+=`<div style="background:${c}">${t}</div>`;}}
+  return `<div class="card"><h3>Cavity efficiency calendar · Mould M-3150 (Jan-25 to Sep-26, not bay-specific)</h3>${h}</div></div>`;}
+
+// ---------- views: downtime ----------
+function vDownSum(){const C=calc();const dtAll=BAYS.map((b,i)=>T(DT)*W[i]);const par=DT_GROUPS.map((_,i)=>T(groupM(i)));
+  return ROW(KP(Math.round(T(C.dt)).toLocaleString(),"Unplanned downtime hrs","red")+KP(Math.round(T(C.pl)).toLocaleString(),"Planned downtime hrs")+KP(Math.round(C.dt[C.dt.length-1]),"Last month unplanned hrs","amb")+KP(Math.round(T(C.dt)/C.dt.length),"Avg hrs / month"))+
+  GRID(card("Downtime hours by bay (click a bar to filter)","bar",BAYS,[{label:"Hours",data:dtAll.map(Math.round),backgroundColor:BAYS.map(b=>sel.has(b)?TEAL:"#cfd9e0")}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}},onClick:(e,els)=>{if(els.length){sel=new Set([BAYS[els[0].index]]);go();}}})+
+  card("Downtime groups (Pareto, hours)","bar",DT_GROUPS.map(d=>d[0]),[{label:"Hours",data:par.map(Math.round),backgroundColor:[TEAL,CYAN,LT,TEAL,LT,LT,LT]}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}}})+
+  card("Planned vs unplanned downtime by month","bar",C.mo,[{label:"Unplanned",data:C.dt.map(Math.round),backgroundColor:TEAL},{label:"Planned",data:C.pl.map(Math.round),backgroundColor:CYAN}],{scales:{x:{stacked:true},y:{stacked:true,grid:GR}}}));}
+function vDownCat(){const C=calc();return GRID(DT_GROUPS.map((g,i)=>mini(g[0]+" — hours by month","bar",C.mo,[{label:"Hours",data:groupM(i).map(Math.round),backgroundColor:PAL[i%PAL.length]}],{scales:{y:{grid:GR}}})).join(""));}
+function vDownTr(){const C=calc();const s=groupM(selGrp);
+  return chips(DT_GROUPS.map(g=>g[0]),selGrp,"grp")+GRID(C.mo.map((mn,m)=>{const w=weekly(s[m],m,selGrp);return mini(mn+" — weekly hours","bar",w.labels,[{label:"Hours",data:w.data,backgroundColor:TEAL}],{scales:{y:{grid:GR}}});}).join(""));}
+
+// ---------- views: quality ----------
+function vQaSum(){const C=calc();const rej=C.rej;const bayRej=BAYS.map((b,i)=>Math.round(T(REJ)*W[i]));
+  return ROW(KP(fmtK(T(rej)),"Rejected pcs (period)","red")+KP(fmtK(rej[rej.length-1]),"Last month rejected")+KP(T(C.cmp),"Customer complaints","amb")+KP("$"+Math.round(T(C.cost))+"K","Complaint & rework cost","amb"))+
+  GRID(card("Rejection types (Pareto, K pcs)","bar",REJ_TYPES.map(d=>d[0]),[{label:"K pcs",data:REJ_TYPES.map(d=>Math.round(d[1]*C.rf)),backgroundColor:[PUR,TEAL,LT,CYAN,PINK,RED,RED,RED,LT,LT]}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}}})+
+  card("Rejections by bay (click a bar to filter)","bar",BAYS,[{label:"K pcs",data:bayRej,backgroundColor:BAYS.map(b=>sel.has(b)?RED:"#f0c4c2")}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}},onClick:(e,els)=>{if(els.length){sel=new Set([BAYS[els[0].index]]);go();}}})+
+  card("Rejected pieces per month (K)","line",C.mo,[{label:"Rejected (K)",data:rej.map(Math.round),borderColor:RED,backgroundColor:"rgba(217,83,79,.1)",fill:true,tension:.35}],{scales:{y:{grid:GR}}}));}
+function vQaCat(){const C=calc();return GRID(REJ_TYPES.map((d,i)=>mini(d[0]+" — pcs by month (K)","bar",C.mo,[{label:"K",data:catM(i,d[1]).map(Math.round),backgroundColor:PAL[i%PAL.length]}],{scales:{y:{grid:GR}}})).join(""));}
+function vQaTr(){const C=calc();const s=catM(selCat,REJ_TYPES[selCat][1]);
+  return chips(REJ_TYPES.map(d=>d[0]),selCat,"cat")+GRID(C.mo.map((mn,m)=>{const w=weekly(s[m],m,selCat+20);return mini(mn+" — weekly pcs (K)","bar",w.labels,[{label:"K",data:w.data,backgroundColor:RED}],{scales:{y:{grid:GR}}});}).join(""));}
+function vComp(){const C=calc();
+  return ROW(KP(T(C.cmp),"Complaints (YTD)","amb")+KP(Math.round(REASONS[0][1]*(T(C.cmp)/81)),"Damage complaints","red")+KP("$"+Math.round(T(C.cost))+"K","Cost & compensation","amb"))+
+  GRID(card("Complaints & cost by month","line",C.mo,[{label:"Complaints",data:C.cmp,borderColor:RED,tension:.35,yAxisID:"y"},{label:"Cost ($K)",data:C.cost.map(v=>+v.toFixed(1)),borderColor:CYAN,backgroundColor:"rgba(76,195,220,.12)",fill:true,tension:.35,yAxisID:"y1"}],{scales:{y:{grid:GR},y1:{position:"right",grid:{display:false}}}})+
+  card("Complaints by reason","doughnut",REASONS.map(d=>d[0]),[{data:REASONS.map(d=>Math.round(d[1]*C.rf)),backgroundColor:[PUR,TEAL,LT,CYAN,PINK]}],{opts:{cutout:"55%"}})+
+  card("Complaints by reason (Pareto)","bar",REASONS.map(d=>d[0]),[{label:"Complaints",data:REASONS.map(d=>d[1]),backgroundColor:[PUR,TEAL,LT,CYAN,PINK]}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}}}));}
+
+// ---------- views: FG ----------
+function vFg(){const rf=ratio();const tot=T(STOCK_AGE)*rf;
+  return ROW(KP(fmtK(tot),"Total FG stock","")+KP((STOCK_AGE[0]/T(STOCK_AGE)*100).toFixed(1)+"%","FG 0-30 days","grn")+KP((STOCK_AGE[1]/T(STOCK_AGE)*100).toFixed(1)+"%","FG 31-60 days","amb")+KP((STOCK_AGE[5]/T(STOCK_AGE)*100).toFixed(1)+"%","FG 366-730 days","red"))+
+  GRID(card("FG stock by age (K pcs)","bar",AGE_LBL,[{label:"K",data:STOCK_AGE.map(v=>Math.round(v*rf)),backgroundColor:[GRN,AMB,AMB,RED,RED,RED]}],{plugins:{legend:{display:false}},scales:{y:{grid:GR}}})+
+  card("Stock by hanger construction","doughnut",CONS.map(d=>d[0]),[{data:CONS.map(d=>Math.round(d[1]*rf)),backgroundColor:PAL}],{opts:{cutout:"55%"}})+
+  table("Stock by article and age",["Article","Buyer","Model","Age","Stock (K)"],ARTS.map(r=>[r[0],r[1],r[2],r[3],Math.round(r[4]*rf)])));}
+
+const RENDER={prod:[vOrdersSum,vShop],eff:[vEffOv,vCyc,vCav],down:[vDownSum,vDownCat,vDownTr],qa:[vQaSum,vQaCat,vQaTr,vComp],fg:[vFg]};
+
+// ---------- mount charts ----------
+function mount(){live.forEach(c=>c.destroy());live=[];
+  specs.forEach(s=>{const isAx=s.type==="bar"||s.type==="line";
+    const cfg={type:s.type,data:{labels:s.labels,datasets:s.datasets},options:{responsive:true,maintainAspectRatio:true,aspectRatio:s.ar||2,animation:false,
+      plugins:{legend:{position:"bottom",labels:{boxWidth:10,font:{size:10}}},...(s.plugins||{})},
+      scales:isAx?{y:{grid:GR},...(s.scales||{})}:undefined,onClick:s.onClick,...(s.opts||{})}};
+    live.push(new Chart(document.getElementById(s.id),cfg));});}
+
+// ---------- render & events ----------
+function sync(){go();}
+function go(){specs=[];uid=0;
+  document.getElementById("tabs").innerHTML=Object.keys(TABS).map(k=>`<button class="tab ${k===main?"on":""}" data-m="${k}">${TABS[k]}</button>`).join("");
+  document.getElementById("subs").innerHTML=VIEWS[main].map((n,i)=>`<span class="sub ${i===sub?"on":""}" data-sub="${i}">${n}</span>`).join("");
+  document.getElementById("view").innerHTML=RENDER[main][sub]();
+  mount();
+  document.getElementById("bayChips").innerHTML=BAYS.map(b=>`<span class="chip ${sel.has(b)?"on":""}" data-b="${b}">${b}</span>`).join("");
+  document.getElementById("allBtn").classList.toggle("on",sel.size===BAYS.length);
+  document.querySelectorAll("[data-y]").forEach(c=>c.classList.toggle("on",+c.dataset.y===year));
+  document.getElementById("info").textContent=`Showing: ${sel.size===BAYS.length?"All bays":[...sel].join(", ")} · ${year} · synthetic values`;}
+document.getElementById("tabs").onclick=e=>{const k=e.target.dataset.m;if(k){main=k;sub=0;go();}};
+document.getElementById("subs").onclick=e=>{const i=e.target.dataset.sub;if(i!==undefined&&e.target.dataset.sub!==undefined){sub=+i;go();}};
+document.getElementById("view").onclick=e=>{const a=e.target.dataset.act,i=+e.target.dataset.i;if(a==="grp"){selGrp=i;go();}if(a==="cat"){selCat=i;go();}};
+document.getElementById("bayChips").onclick=e=>{const b=e.target.dataset.b;if(!b)return;sel.has(b)?sel.delete(b):sel.add(b);if(!sel.size)sel=new Set(BAYS);go();};
+document.getElementById("allBtn").onclick=()=>{sel=new Set(BAYS);go();};
+document.querySelectorAll("[data-y]").forEach(c=>c.onclick=()=>{year=+c.dataset.y;go();});
+go();
+</script>
+</body>
+</html>
